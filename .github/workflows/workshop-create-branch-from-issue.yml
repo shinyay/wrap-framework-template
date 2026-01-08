@@ -46,7 +46,11 @@ jobs:
             function getSection(heading) {
               const re = new RegExp(`^###\\s+${escapeRegExp(heading)}\\s*\\n([\\s\\S]*?)(?=\\n###\\s+|$)`, "m");
               const m = bodyText.match(re);
-              return m ? m[1].trim() : "";
+              if (!m) return "";
+              const value = m[1].trim();
+              // Normalize GitHub issue form "no response" placeholders to empty strings
+              if (value === "_No response_" || value === "No response") return "";
+              return value;
             }
 
             async function comment(msg) {
