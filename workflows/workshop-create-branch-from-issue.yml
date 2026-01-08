@@ -1,0 +1,245 @@
+name: "Workshop: Create dated branch from Issue"
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  create-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create branch (from Issue form)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const issue = context.payload.issue;
+            const issueNumber = issue.number;
+            const actor = issue.user?.login ?? "unknown";
+
+            const labels = (issue.labels ?? []).map(l => (typeof l === "string" ? l : l.name));
+            const title = issue.title ?? "";
+
+            // Heuristics: either a label from the template, or a title prefix.
+            const isWorkshopRequest =
+              labels.includes("workshop-branch-request") ||
+              labels.includes("workshop") ||
+              title.toLowerCase().startsWith("[workshop]");
+
+            if (!isWorkshopRequest) {
+              core.info("Not a workshop branch request. Exiting.");
+              return;
+            }
+
+            const bodyText = issue.body ?? "";
+
+            function escapeRegExp(s) {
+              return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            }
+
+            function getSection(heading) {
+              const re = new RegExp(`^###\\s+${escapeRegExp(heading)}\\s*\\n([\\s\\S]*?)(?=\\n###\\s+|$)`, "m");
+              const m = bodyText.match(re);
+              return m ? m[1].trim() : "";
+            }
+
+            async function comment(msg) {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: issueNumber, body: msg
+              });
+            }
+
+            // Safety guard: only allow collaborators with write/maintain/admin.
+            let permission = "none";
+            try {
+              const perm = await github.rest.repos.getCollaboratorPermissionLevel({
+                owner, repo, username: actor
+              });
+              permission = perm.data.permission;
+            } catch (e) {
+              core.warning(`Could not determine collaborator permission for @${actor}: ${e.message}`);
+              permission = "none";
+            }
+
+            const allowed = ["admin", "maintain", "write"].includes(permission);
+            if (!allowed) {
+              await comment(
+                `⚠️ Branch creation is restricted to users with **write/maintain/admin** access.\n\n` +
+                `- Actor: @${actor}\n` +
+                `- Detected permission: **${permission}**\n\n` +
+                `If this is a workshop, ask a maintainer to create the branch or run this on your fork.`
+              );
+              core.info(`User permission '${permission}' is not allowed. Exiting.`);
+              return;
+            }
+
+            // Read fields from the issue form output
+            const dateInput = getSection("Workshop date (YYYY-MM-DD)");
+            const baseRefInput = getSection("Base ref (branch or tag)") || "main";
+            const prefixInput = getSection("Branch prefix") || "workshop";
+            const suffixInput = getSection("Optional suffix (slug)");
+            const onExists = getSection("If the branch already exists") || "Comment and do nothing";
+            const postAction = getSection("After the branch is created") || "Comment with checkout instructions";
+
+            // Date: if missing, default to issue created date (UTC)
+            const createdAt = issue.created_at ? String(issue.created_at).slice(0, 10) : "";
+            const date = (dateInput && dateInput.length > 0) ? dateInput : createdAt;
+
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+              await comment(
+                `❌ Invalid date: \`${dateInput || "(empty)"}\`.\n\n` +
+                `Please use **YYYY-MM-DD** (example: \`2026-01-07\`).\n` +
+                `Tip: leave it blank to use the Issue created date (UTC): \`${createdAt || "unknown"}\`.`
+              );
+              core.setFailed("Invalid date format.");
+              return;
+            }
+
+            function slugify(s) {
+              return String(s || "")
+                .trim()
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "")
+                .slice(0, 40);
+            }
+
+            const prefix = prefixInput.trim();
+            if (!prefix || /\s/.test(prefix)) {
+              await comment(`❌ Invalid branch prefix: \`${prefixInput}\`. Use a single token (no spaces).`);
+              core.setFailed("Invalid branch prefix.");
+              return;
+            }
+
+            const suffix = slugify(suffixInput);
+            if (suffixInput && suffixInput.trim().length > 0 && suffix.length === 0) {
+              await comment(
+                `❌ Could not convert suffix to a safe slug: \`${suffixInput}\`.\n` +
+                `Please use letters/numbers/hyphens (example: \`tokyo-a\`).`
+              );
+              core.setFailed("Invalid suffix.");
+              return;
+            }
+
+            let branchName = `${prefix}/${date}`;
+            if (suffix) branchName += `-${suffix}`;
+
+            async function resolveCommitSha(refName) {
+              // Accept: "main", "heads/main", "refs/heads/main", or tags.
+              const normalized = String(refName).trim().replace(/^refs\//, "");
+              const candidates = [];
+
+              if (normalized.startsWith("heads/") || normalized.startsWith("tags/")) {
+                candidates.push(normalized);
+              } else {
+                candidates.push(`heads/${normalized}`, `tags/${normalized}`);
+              }
+
+              let refData = null;
+              for (const candidate of candidates) {
+                try {
+                  const r = await github.rest.git.getRef({ owner, repo, ref: candidate });
+                  refData = r.data;
+                  break;
+                } catch (e) {
+                  if (e.status !== 404) throw e;
+                }
+              }
+
+              if (!refData) {
+                throw new Error(`Base ref not found: ${refName}`);
+              }
+
+              // Dereference annotated tags to commits
+              let sha = refData.object.sha;
+              let type = refData.object.type;
+
+              let guard = 0;
+              while (type === "tag" && guard < 5) {
+                const tagObj = await github.rest.git.getTag({ owner, repo, tag_sha: sha });
+                sha = tagObj.data.object.sha;
+                type = tagObj.data.object.type;
+                guard++;
+              }
+
+              if (type !== "commit") {
+                throw new Error(`Base ref did not resolve to a commit: ${refName} (type=${type})`);
+              }
+
+              return sha;
+            }
+
+            let baseSha;
+            try {
+              baseSha = await resolveCommitSha(baseRefInput);
+            } catch (e) {
+              await comment(
+                `❌ Failed to resolve base ref: \`${baseRefInput}\`.\n\n` +
+                `Error: ${e.message}`
+              );
+              core.setFailed(e.message);
+              return;
+            }
+
+            // Check if target branch already exists
+            const targetRef = `heads/${branchName}`;
+            let exists = false;
+            try {
+              await github.rest.git.getRef({ owner, repo, ref: targetRef });
+              exists = true;
+            } catch (e) {
+              if (e.status !== 404) throw e;
+            }
+
+            if (exists) {
+              const msg = `ℹ️ Branch already exists: \`${branchName}\`. No changes made.`;
+              if (onExists.toLowerCase().includes("fail")) {
+                await comment(msg);
+                core.setFailed("Branch already exists.");
+                return;
+              }
+              await comment(msg);
+              return;
+            }
+
+            // Create the branch
+            await github.rest.git.createRef({
+              owner, repo,
+              ref: `refs/heads/${branchName}`,
+              sha: baseSha
+            });
+
+            const branchUrl = `https://github.com/${owner}/${repo}/tree/${branchName}`;
+
+            // Comment back with next steps
+            let response =
+              `✅ Created branch: \`${branchName}\`\n` +
+              `- Base ref: \`${baseRefInput}\`\n` +
+              `- Commit: \`${baseSha}\`\n\n` +
+              `Open branch: ${branchUrl}\n\n` +
+              `Checkout:\n` +
+              "```bash\n" +
+              `git fetch origin ${branchName}\n` +
+              `git checkout ${branchName}\n` +
+              "```\n";
+
+            response +=
+              `Next (recommended):\n` +
+              `1. Open your first WRAP Issue on branch \`${branchName}\`\n` +
+              `2. Assign it to Copilot coding agent\n` +
+              `3. Review the PR and iterate via PR comments\n`;
+
+            await comment(response);
+
+            if (postAction.toLowerCase().includes("close")) {
+              await github.rest.issues.update({
+                owner, repo, issue_number: issueNumber, state: "closed"
+              });
+            }
+

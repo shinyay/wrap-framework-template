@@ -1,0 +1,210 @@
+name: "WRAP R: Copilot Setup Steps"
+description: "R-only: Create/update .github/workflows/copilot-setup-steps.yml (Copilot pre-task environment setup)."
+title: "[r/setup-steps] <verb>: <outcome>"
+labels: ["wrap-r", "wrap-r-setup-steps", "copilot-task", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## How to use this template
+
+        Use this form when the PR should change **only**:
+        - `.github/workflows/copilot-setup-steps.yml`
+
+        This workflow has strict constraints (do not break them):
+        - File path must be exactly `.github/workflows/copilot-setup-steps.yml`
+        - The workflow must contain a single job named `copilot-setup-steps`
+        - Keep it minimal, reliable, and fast
+        - Use least permissions
+
+        Finalize the issue body before assigning to Copilot.
+        Requirement changes after assignment should go into the PR discussion.
+
+  - type: dropdown
+    id: scope_size
+    attributes:
+      label: Expected scope (rough)
+      options:
+        - XS (small tweak: message/timeout/permissions)
+        - S (add one stack detection/install path)
+        - M (refactor detection logic, still one job)
+        - L (borderline; likely split)
+        - XL (do not assign; needs design)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0 (blocks agent work)
+        - P1 (high)
+        - P2 (normal)
+        - P3 (low)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: runner
+    attributes:
+      label: Runner target
+      description: "Start with ubuntu-latest unless you have a reason not to."
+      options:
+        - ubuntu-latest
+        - ubuntu-latest (larger runner label / custom)
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: supported_stacks
+    attributes:
+      label: Supported stack setup paths to implement (select all that apply)
+      description: "Keep initial versions conservative; skip unsafe restores."
+      options:
+        - label: "Node.js (npm)"
+        - label: "Node.js (pnpm)"
+        - label: "Node.js (yarn)"
+        - label: "Python (pip)"
+        - label: "Python (poetry)"
+        - label: ".NET (restore when unambiguous)"
+        - label: "Other / TBD (describe below)"
+    validations:
+      required: false
+
+  - type: textarea
+    id: exec_brief
+    attributes:
+      label: Executive brief (read first)
+      placeholder: |
+        - Goal: …
+        - What stacks to support: …
+        - Detection approach: …
+        - Safety rules (skip ambiguous restores): …
+        - Definition of done: …
+        - How to validate (Actions run): …
+    validations:
+      required: true
+
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Hard constraints (must follow)
+      placeholder: |
+        - Path: `.github/workflows/copilot-setup-steps.yml`
+        - Single job only: `copilot-setup-steps` (no other jobs)
+        - Least permissions: start with `contents: read`
+        - Must succeed for empty repo: no manifests => no-op success with clear logs
+        - No secrets/PII in workflow
+        - Keep steps minimal and deterministic
+    validations:
+      required: true
+
+  - type: textarea
+    id: detection_rules
+    attributes:
+      label: Detection rules (be explicit)
+      description: "Define what files count as a signal and how deep to scan."
+      placeholder: |
+        - Scan scope: repo root only (recommended for initial version) OR monorepo-aware (describe)
+        - Node signals: package.json + lockfile (package-lock.json / pnpm-lock.yaml / yarn.lock)
+        - Python signals: requirements.txt OR pyproject.toml + poetry.lock
+        - .NET signals: exactly one *.sln OR exactly one *.csproj (otherwise skip restore)
+        - Multiple stacks: log and run only safe steps
+    validations:
+      required: true
+
+  - type: textarea
+    id: setup_actions
+    attributes:
+      label: Setup actions and commands
+      description: "Define versions and exact commands (or state TBD)."
+      placeholder: |
+        - Node:
+          - setup: actions/setup-node (version TBD)
+          - node-version: lts/* or a specific version
+          - npm: npm ci (fallback npm install if no lockfile)
+          - pnpm: corepack enable; pnpm install --frozen-lockfile
+          - yarn: corepack enable; yarn install --immutable
+        - Python:
+          - setup: actions/setup-python
+          - python-version: 3.x (or specific)
+          - pip: pip install -r requirements.txt
+          - poetry: pip install poetry; poetry install --no-interaction --no-root
+        - .NET:
+          - setup: actions/setup-dotnet
+          - dotnet-version: 8.0.x (or specific)
+          - restore: dotnet restore <target> (only when unambiguous)
+    validations:
+      required: true
+
+  - type: textarea
+    id: change_surface
+    attributes:
+      label: Change surface (what to touch / what to avoid)
+      placeholder: |
+        **Must/likely touch**
+        - `.github/workflows/copilot-setup-steps.yml`
+
+        **Must avoid / do not edit**
+        - `.github/copilot-instructions.md`
+        - `AGENTS.md`
+        - `.github/ISSUE_TEMPLATE/**`
+        - `README.md`, `LICENSE`
+        - application code + dependencies
+        - other workflows in `.github/workflows/**`
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance criteria (verifiable)
+      placeholder: |
+        - [ ] Only `.github/workflows/copilot-setup-steps.yml` changed
+        - [ ] File path is correct
+        - [ ] Exactly one job exists and it is named `copilot-setup-steps`
+        - [ ] Permissions are least privilege (`contents: read` unless justified)
+        - [ ] Workflow succeeds for empty repo (no manifests => no-op success)
+        - [ ] Logs clearly show detection + executed/skipped steps
+        - [ ] No secrets/PII added
+    validations:
+      required: true
+
+  - type: textarea
+    id: test_plan
+    attributes:
+      label: Test plan (Actions validation required)
+      placeholder: |
+        1) Open Actions tab
+        2) Run workflow "Copilot Setup Steps" via workflow_dispatch
+        3) Confirm success (green)
+        4) Confirm logs show:
+           - detected manifests (or "no manifests")
+           - which setup steps ran (or were skipped)
+    validations:
+      required: true
+
+  - type: textarea
+    id: edge_cases
+    attributes:
+      label: Edge cases / failure modes to handle
+      placeholder: |
+        - Empty repo: must succeed with a no-op
+        - Multiple stacks detected: run only safe steps; skip ambiguous restores
+        - Monorepo: ambiguous root; avoid scanning deep unless specified
+        - Private registries: install fails; do not add secrets here (follow-up issue)
+        - Overly long setup: keep minimal; avoid heavy builds/tests in setup
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: readiness
+    attributes:
+      label: Setup-steps readiness checklist
+      options:
+        - label: "I understand this workflow must have a single job named `copilot-setup-steps`."
+        - label: "I will keep the workflow minimal and deterministic."
+        - label: "I am not requesting secrets/credentials to be added in this PR."
+        - label: "I provided explicit detection and skip rules for ambiguous cases."
+

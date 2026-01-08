@@ -1,0 +1,89 @@
+name: "Workshop: Create a dated branch"
+description: "Create a new workshop branch like workshop/2026-01-07 from a baseline ref, triggered by an Issue."
+title: "[workshop] create branch: workshop/YYYY-MM-DD"
+labels: ["workshop", "workshop-branch-request", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## What this Issue does
+
+        When you submit this Issue, a GitHub Actions workflow will:
+        1) Read the values you entered below
+        2) Create a new branch named: `<branch prefix>/<date>[-<suffix>]`
+        3) Create the branch from the specified **base ref** (branch or tag)
+        4) Comment back on this Issue with checkout instructions (and optionally close the Issue)
+
+        Notes:
+        - If **Workshop date** is left blank, the workflow uses the Issue created date (UTC).
+        - The workflow only creates branches for users with **write/maintain/admin** access (safety guard).
+        - The workflow file must exist on the repository’s **default branch** to run on Issues events.
+
+  - type: input
+    id: workshop_date
+    attributes:
+      label: Workshop date (YYYY-MM-DD)
+      description: "Used for the branch name. Leave blank to use the Issue created date (UTC)."
+      placeholder: "2026-01-07"
+    validations:
+      required: false
+
+  - type: input
+    id: base_ref
+    attributes:
+      label: Base ref (branch or tag)
+      description: "The ref to branch from. Typically your blank baseline branch (e.g., main)."
+      placeholder: "main"
+      value: "main"
+    validations:
+      required: true
+
+  - type: input
+    id: branch_prefix
+    attributes:
+      label: Branch prefix
+      description: "Branch will be created as: <prefix>/<date>[-<suffix>]"
+      value: "workshop"
+    validations:
+      required: true
+
+  - type: input
+    id: branch_suffix
+    attributes:
+      label: Optional suffix (slug)
+      description: "Optional: appended as -<suffix> to avoid collisions (recommended: letters/numbers/hyphens)."
+      placeholder: "tokyo-a"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: on_exists
+    attributes:
+      label: If the branch already exists
+      options:
+        - Comment and do nothing
+        - Fail the workflow
+    validations:
+      required: true
+
+  - type: dropdown
+    id: post_action
+    attributes:
+      label: After the branch is created
+      options:
+        - Comment with checkout instructions
+        - Comment and close this issue
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Confirmations (required)
+      description: "These must be checked to proceed."
+      options:
+        - label: I confirm this Issue should create a new branch in this repository.
+          required: true
+        - label: I confirm the branch name is derived from the date and may be visible to others.
+          required: true
+

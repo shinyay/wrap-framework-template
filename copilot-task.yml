@@ -1,0 +1,364 @@
+name: "Copilot Task (Ultra-detailed)"
+description: "A newcomer-friendly, Copilot-ready issue form for well-scoped tasks."
+title: "[<area>] <verb>: <outcome>"
+labels: ["copilot-task", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## How to use this template
+
+        This form is optimized for **GitHub Copilot coding agent** and for humans reviewing its PRs.
+
+        - **Write for a newcomer**: include background, pointers to the right files, and concrete examples.
+        - **Make it reviewable**: aim for a single PR worth of changes. If it's bigger, split the task.
+        - **Put everything important in the issue body before assigning to Copilot.**
+          Copilot uses the issue title + description (+ any existing comments) as its prompt, and it won't react to new issue comments after assignment.
+          If requirements change, add them as comments on the PR Copilot opens.
+
+  - type: dropdown
+    id: task_kind
+    attributes:
+      label: Task kind
+      description: "Select the primary kind of work. This helps triage and sets expectations."
+      options:
+        - Bug fix
+        - Feature / enhancement
+        - Refactor / tech debt
+        - Tests (add or improve)
+        - Documentation
+        - Build / CI / tooling
+        - Performance
+        - Security / hardening
+        - Accessibility
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scope_size
+    attributes:
+      label: Expected scope (rough)
+      description: "If you pick L/XL, consider splitting into multiple atomic issues before assigning to Copilot."
+      options:
+        - XS (≤1 file, trivial)
+        - S (1-3 files, straightforward)
+        - M (multi-file, still one PR)
+        - L (borderline; likely split)
+        - XL (do not assign; needs design)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0 (urgent / production broken)
+        - P1 (high)
+        - P2 (normal)
+        - P3 (low / nice-to-have)
+    validations:
+      required: true
+
+  - type: input
+    id: area
+    attributes:
+      label: Area / component
+      description: "The subsystem or module affected (used for routing + title refinement)."
+      placeholder: "Examples: auth, billing, api-gateway, ui/settings, infra/terraform"
+    validations:
+      required: true
+
+  - type: textarea
+    id: exec_brief
+    attributes:
+      label: Executive brief (read first)
+      description: |
+        A 5–10 line summary that lets a newcomer (or Copilot) start immediately.
+        Include: what to change, where to change it, and what “done” means.
+      placeholder: |
+        - Problem: …
+        - Desired outcome: …
+        - Primary entry point(s): `src/...`
+        - Constraints: …
+        - How to verify: run `…` and confirm `…`
+    validations:
+      required: true
+
+  - type: textarea
+    id: background
+    attributes:
+      label: Background / why now
+      description: "Context that a new contributor would not know: business reason, user impact, history, links to incidents, etc."
+      placeholder: |
+        - User impact / pain: …
+        - Why now / deadline: …
+        - Related context: …
+    validations:
+      required: true
+
+  - type: textarea
+    id: current_behavior
+    attributes:
+      label: Current behavior / current state
+      description: "Describe what exists today. For bugs: what actually happens. For features/refactors: what’s currently implemented and why it’s insufficient."
+      placeholder: |
+        - What happens today: …
+        - Where it happens (routes/classes/functions): …
+        - Evidence (logs/screenshots): …
+    validations:
+      required: true
+
+  - type: textarea
+    id: desired_behavior
+    attributes:
+      label: Desired behavior / requirements
+      description: |
+        Specify the target behavior and requirements. Be explicit.
+        If a specific pattern should be followed (error handling, logging, style), paste an example.
+      placeholder: |
+        - New behavior: …
+        - User-facing copy / UI details (if applicable): …
+        - API contract changes (if applicable): …
+        - Example pattern to follow (paste code / link): …
+    validations:
+      required: true
+
+  - type: textarea
+    id: non_goals
+    attributes:
+      label: Non-goals / out of scope
+      description: "What this task must NOT do (prevents scope creep and accidental redesigns)."
+      placeholder: |
+        - Do NOT change: …
+        - Defer to follow-up issues: …
+    validations:
+      required: true
+
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints & guardrails
+      description: "Hard constraints Copilot must follow: architecture rules, libraries to use/avoid, backwards compatibility, naming, style, etc."
+      placeholder: |
+        - Must keep API backward compatible? yes/no + details
+        - Must not add new dependencies? yes/no
+        - Coding standards: …
+        - Error handling pattern to follow: …
+        - Logging/telemetry requirements: …
+    validations:
+      required: true
+
+  - type: textarea
+    id: change_surface
+    attributes:
+      label: Change surface (what to touch / what to avoid)
+      description: |
+        Point to the most relevant files and directories. Be as specific as possible.
+        If you don't know exact files, list search terms or symbols to locate.
+      placeholder: |
+        **Must/likely touch**
+        - `src/...`
+        - `packages/...`
+
+        **Must avoid / do not edit**
+        - `generated/**`
+        - `vendor/**`
+
+        **Symbols / search terms**
+        - `functionName`, `ClassName`, `"error_code_xyz"`
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed_approach
+    attributes:
+      label: Proposed approach (optional)
+      description: |
+        Optional: If you already know the approach, outline it. This increases alignment.
+        If multiple approaches are acceptable, list them and note tradeoffs.
+      placeholder: |
+        Approach A (preferred): …
+        Approach B (acceptable): …
+        Tradeoffs / why: …
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance criteria (verifiable)
+      description: |
+        Write concrete, testable “done” conditions.
+        Prefer checkboxes. Avoid vague words like "should work" without specifics.
+      placeholder: |
+        - [ ] …
+        - [ ] …
+        - [ ] No regression in …
+        - [ ] Unit tests added/updated for …
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: test_types
+    attributes:
+      label: Test expectations (select all that apply)
+      description: "Select what kinds of verification are expected. Then fill in the commands/steps below."
+      options:
+        - label: Unit tests must be added/updated
+        - label: Integration tests must be added/updated
+        - label: E2E / UI tests must be added/updated
+        - label: Manual QA steps required
+        - label: No new tests required (explain why in the test plan)
+    validations:
+      required: false
+
+  - type: textarea
+    id: test_plan
+    attributes:
+      label: Test plan (commands + steps)
+      description: |
+        Provide the exact commands Copilot (and reviewers) should run, plus any required manual steps.
+        Put commands in code blocks.
+      placeholder: |
+        **Local**
+        ```bash
+        # setup
+        …
+
+        # unit tests
+        …
+
+        # lint/format
+        …
+        ```
+
+        **CI**
+        - Expected workflows: …
+        - Notes: …
+
+        **Manual QA**
+        1. …
+        2. …
+    validations:
+      required: true
+
+  - type: textarea
+    id: edge_cases
+    attributes:
+      label: Edge cases / failure modes to handle
+      description: "List tricky inputs, error cases, concurrency, permissions, nulls, timeouts, etc."
+      placeholder: |
+        - …
+        - …
+    validations:
+      required: true
+
+  - type: textarea
+    id: data_migrations
+    attributes:
+      label: Data / schema / migration considerations
+      description: "If the change touches data models, schemas, DB migrations, config, or backward compatibility, specify the exact expectations."
+      placeholder: |
+        - Schema changes: …
+        - Migration steps: …
+        - Backward compatibility strategy: …
+        - Rollback plan: …
+
+  - type: textarea
+    id: perf
+    attributes:
+      label: Performance / scalability considerations
+      description: "If performance matters, define what 'good' means (latency, memory, big-O, caching behavior)."
+      placeholder: |
+        - Performance baseline: …
+        - Expected impact: …
+        - Benchmarks / profiling to run: …
+
+  - type: textarea
+    id: security_privacy
+    attributes:
+      label: Security / privacy considerations
+      description: |
+        Note any security requirements (authz/authn, input validation, secrets handling, PII).
+        If none, explicitly say "None".
+      placeholder: |
+        - Threat model / risks: …
+        - Input validation expectations: …
+        - PII considerations: …
+        - Secrets handling: …
+
+  - type: textarea
+    id: observability
+    attributes:
+      label: Observability (logs/metrics/traces)
+      description: "If you want new logs/metrics/traces, be explicit about event names, log levels, sampling, etc."
+      placeholder: |
+        - Add log at … level when …
+        - Metric name + labels: …
+        - Trace spans: …
+
+  - type: textarea
+    id: docs
+    attributes:
+      label: Documentation updates
+      description: "If docs/readmes/changelogs must be updated, specify which files and what content."
+      placeholder: |
+        - Update `README.md` section …
+        - Add docs page …
+        - Changelog entry required? yes/no
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies / related work
+      description: "Link related issues/PRs, blocked-by relationships, rollout dependencies, external docs, etc."
+      placeholder: |
+        - Blocked by: #…
+        - Related: #…
+        - Reference PR: …
+        - Spec / doc: …
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Concrete examples (preferred)
+      description: |
+        Paste examples that remove ambiguity: desired error messages, JSON payloads, UI screenshots, or small code snippets.
+        If you reference existing code, link to the file/lines.
+      placeholder: |
+        **Example input/output**
+        ```json
+        …
+        ```
+
+        **Example code pattern**
+        ```ts
+        …
+        ```
+
+  - type: textarea
+    id: reviewer_notes
+    attributes:
+      label: Reviewer notes (what to pay attention to)
+      description: "Tell reviewers where to focus: risky areas, compatibility, tricky logic, places to double-check."
+      placeholder: |
+        - Please pay attention to …
+        - Known tricky part: …
+        - Anything intentionally left out: …
+
+  - type: checkboxes
+    id: copilot_readiness
+    attributes:
+      label: Copilot readiness checklist
+      description: |
+        These checks are here to help you write an issue that Copilot can complete in one run.
+        If you cannot check most of these, consider splitting the task or doing it manually.
+      options:
+        - label: The issue title clearly states **where** and **what** (area + action + outcome).
+        - label: The issue contains enough context for someone **new to the codebase** to start.
+        - label: I provided **file paths / entry points** (or search terms) for where to change code.
+        - label: Acceptance criteria are **verifiable** (not vague).
+        - label: A test plan (commands/steps) is included.
+        - label: Scope fits in **one PR** in **this repository** (no cross-repo work required).
+        - label: No secrets/credentials/PII are included in this issue.
+

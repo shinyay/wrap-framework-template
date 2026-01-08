@@ -1,0 +1,167 @@
+name: "WRAP R: AGENTS.md"
+description: "R-only: Create/update AGENTS.md (agent operating rules)."
+title: "[r/agents] <verb>: <outcome>"
+labels: ["wrap-r", "wrap-r-agents", "copilot-task", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## How to use this template
+
+        Use this form when the PR should change **only**:
+        - `AGENTS.md`
+
+        Keep it atomic:
+        - No app code changes
+        - No dependency changes
+        - No workflow changes
+
+        Finalize the issue body before assigning to Copilot.
+        Requirement changes after assignment should go into the PR discussion.
+
+  - type: dropdown
+    id: scope_size
+    attributes:
+      label: Expected scope (rough)
+      options:
+        - XS (typo / small clarification)
+        - S (small section addition)
+        - M (rewrite/structure improvement)
+        - L (borderline; likely split)
+        - XL (do not assign; needs design)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0 (blocks agent work)
+        - P1 (high)
+        - P2 (normal)
+        - P3 (low)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: instruction_language
+    attributes:
+      label: AGENTS.md language
+      options:
+        - English
+        - Japanese
+        - Bilingual (English + Japanese)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: stack_certainty
+    attributes:
+      label: Tech stack certainty
+      options:
+        - Unknown (TBD-heavy)
+        - Partially known
+        - Mostly known
+    validations:
+      required: true
+
+  - type: textarea
+    id: exec_brief
+    attributes:
+      label: Executive brief (read first)
+      placeholder: |
+        - Goal: …
+        - Key behaviors to enforce: …
+        - Key boundaries (Never / Ask first / Always): …
+        - Definition of done: …
+    validations:
+      required: true
+
+  - type: textarea
+    id: required_sections
+    attributes:
+      label: Required sections to include
+      placeholder: |
+        Must include:
+        - Goals
+        - How to work on an issue (step-by-step)
+        - Boundaries: Never / Ask first / Always
+        - If stack is NOT specified: do not pick silently; propose options and stop
+        - PR description template (Summary / How to test / Assumptions / Risks)
+        - Rule about requirement changes after assignment: handle in PR discussion
+    validations:
+      required: true
+
+  - type: textarea
+    id: repo_specific_boundaries
+    attributes:
+      label: Repo-specific boundaries (optional)
+      placeholder: |
+        - Avoid touching: …
+        - Require review before: …
+        - Special security constraints: …
+    validations:
+      required: false
+
+  - type: textarea
+    id: non_goals
+    attributes:
+      label: Non-goals / out of scope
+      placeholder: |
+        - Do NOT change `.github/copilot-instructions.md`
+        - Do NOT change workflows
+        - Do NOT add code/dependencies
+    validations:
+      required: true
+
+  - type: textarea
+    id: change_surface
+    attributes:
+      label: Change surface (what to touch / what to avoid)
+      placeholder: |
+        **Must/likely touch**
+        - `AGENTS.md`
+
+        **Must avoid / do not edit**
+        - `.github/copilot-instructions.md`
+        - `.github/workflows/**`
+        - `.github/ISSUE_TEMPLATE/**`
+        - `README.md`, `LICENSE`
+        - application code + dependencies
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance criteria (verifiable)
+      placeholder: |
+        - [ ] Only `AGENTS.md` changed
+        - [ ] Required sections exist
+        - [ ] Stack-unknown behavior is explicit (no silent tech choices)
+        - [ ] No secrets/PII included
+    validations:
+      required: true
+
+  - type: textarea
+    id: test_plan
+    attributes:
+      label: Test plan (steps)
+      placeholder: |
+        - Verify PR touches only `AGENTS.md`
+        - Review for clarity (newcomer-friendly, actionable)
+    validations:
+      required: true
+
+  - type: textarea
+    id: edge_cases
+    attributes:
+      label: Edge cases / failure modes to handle
+      placeholder: |
+        - AGENTS.md conflicts with `.github/copilot-instructions.md` (avoid contradictory rules)
+        - Too vague rules cause agent to improvise scope (be explicit about atomic scope and boundaries)
+        - Stack not specified: avoid writing stack-specific commands as “truth”
+    validations:
+      required: true
+

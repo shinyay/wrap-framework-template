@@ -1,0 +1,417 @@
+name: "WRAP R Task (Repo Guidance & Copilot Setup)"
+description: "R-only: Create/update repo instructions and Copilot setup steps (copilot-instructions.md, AGENTS.md, copilot-setup-steps.yml)."
+title: "[r/<artifact>] <verb>: <outcome>"
+labels: ["wrap-r", "copilot-task", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## How to use this template
+
+        This form is optimized for **GitHub Copilot coding agent** and for humans reviewing its PRs.
+
+        Use this template for **R-only work**:
+        - `.github/copilot-instructions.md` (repo-wide Copilot guidance)
+        - `AGENTS.md` (agent runbook / operating rules)
+        - `.github/workflows/copilot-setup-steps.yml` (Copilot pre-task environment setup)
+
+        Guidelines:
+        - **Keep it atomic**: one PR, minimal files.
+        - **Prevent drift**: be explicit about what is “TBD” vs finalized.
+        - **No secrets**: never include tokens/credentials/PII.
+        - **Assignment rule**: finalize the Issue body before assigning to Copilot. If requirements change later, add them on the PR.
+
+  - type: dropdown
+    id: r_goal
+    attributes:
+      label: R task goal
+      description: "What is the primary goal of this R change?"
+      options:
+        - Bootstrap (first-time R baseline in an empty repo)
+        - Refine (improve existing R instructions/policies)
+        - Fix drift (instructions out of sync with repo reality)
+        - Expand (broaden copilot-setup-steps coverage/capabilities)
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scope_size
+    attributes:
+      label: Expected scope (rough)
+      description: "If you pick L/XL, consider splitting into smaller R-only issues."
+      options:
+        - XS (1 file, trivial)
+        - S (1-2 files, straightforward)
+        - M (2-3 files, still one PR)
+        - L (borderline; likely split)
+        - XL (do not assign; needs design)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0 (urgent / blocks agent work)
+        - P1 (high)
+        - P2 (normal)
+        - P3 (low / nice-to-have)
+    validations:
+      required: true
+
+  - type: input
+    id: area
+    attributes:
+      label: Area / component
+      description: "Used for routing + title refinement."
+      placeholder: "Examples: r/instructions, r/agents, r/setup-steps, r/policies"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: artifacts
+    attributes:
+      label: R artifacts in scope (select all that apply)
+      description: "Pick what this PR is allowed to change. Anything not selected should be treated as out of scope."
+      options:
+        - label: ".github/copilot-instructions.md"
+        - label: "AGENTS.md"
+        - label: ".github/workflows/copilot-setup-steps.yml"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: instruction_language
+    attributes:
+      label: Instruction language
+      description: "Language to use for the created/updated instruction files."
+      options:
+        - English
+        - Japanese
+        - Bilingual (English + Japanese)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: repo_stage
+    attributes:
+      label: Repository stage
+      description: "Helps decide how many placeholders (TBD) are appropriate."
+      options:
+        - Empty/near-empty (no app code / no established commands)
+        - Minimal skeleton exists (basic build/test/run shape exists)
+        - Established repo (CI + conventions exist)
+        - Monorepo (apps/packages layout)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: stack_certainty
+    attributes:
+      label: Tech stack certainty
+      description: "If unknown, the R files must avoid silently choosing a stack."
+      options:
+        - Unknown (TBD-heavy)
+        - Partially known (runtime/language known, tooling TBD)
+        - Mostly known (commands and tools are known)
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: target_stacks
+    attributes:
+      label: Target stacks (optional)
+      description: "Only needed if you want `copilot-setup-steps` to detect/setup specific stacks."
+      options:
+        - label: "Node.js / JavaScript / TypeScript"
+        - label: "Python"
+        - label: ".NET"
+        - label: "Java (Maven/Gradle)"
+        - label: "Go"
+        - label: "Rust"
+        - label: "Other / TBD"
+    validations:
+      required: false
+
+  - type: textarea
+    id: exec_brief
+    attributes:
+      label: Executive brief (read first)
+      description: "5–10 lines: what to change, where, and what done means."
+      placeholder: |
+        - Goal: …
+        - Artifacts in scope: …
+        - Out of scope: …
+        - Repo stage + stack certainty: …
+        - Definition of done: …
+        - How to verify: …
+    validations:
+      required: true
+
+  - type: textarea
+    id: background
+    attributes:
+      label: Background / why now
+      description: "Why this R change matters (agent confusion, repeated review comments, incidents, onboarding pain)."
+      placeholder: |
+        - Pain today: …
+        - Why now: …
+        - What this unblocks: …
+    validations:
+      required: true
+
+  - type: textarea
+    id: current_state
+    attributes:
+      label: Current state / symptoms
+      description: "What is wrong or missing today? Be specific."
+      placeholder: |
+        - Copilot/people confusion observed: …
+        - Drift examples (commands/paths mismatch): …
+        - Conflicting policies today: …
+    validations:
+      required: true
+
+  - type: textarea
+    id: desired_state
+    attributes:
+      label: Desired state / requirements
+      description: "Describe the intended R outcome. Use explicit placeholders (TBD) where needed."
+      placeholder: |
+        - New/updated guidance should: …
+        - What must be explicit TBD: …
+        - What must be finalized: …
+        - Tone (strict vs flexible): …
+    validations:
+      required: true
+
+  - type: textarea
+    id: stack_snapshot
+    attributes:
+      label: Stack snapshot (only the known parts)
+      description: "If unknown, write TBD. Do not silently decide here."
+      placeholder: |
+        - Primary language/runtime: TBD
+        - Framework: TBD
+        - Package manager/build tool: TBD
+        - Test runner: TBD
+        - Lint/format: TBD
+        - Entry points: TBD
+        - Monorepo layout: TBD
+    validations:
+      required: true
+
+  - type: textarea
+    id: standard_commands
+    attributes:
+      label: Standard commands (what should be documented)
+      description: "If the repo has README/Makefile already, those are the source of truth."
+      placeholder: |
+        - Setup/install: TBD
+        - Build: TBD
+        - Test: TBD
+        - Lint: TBD
+        - Format: TBD
+        - Run locally: TBD
+        - CI (combined): TBD
+    validations:
+      required: true
+
+  - type: textarea
+    id: policies
+    attributes:
+      label: Policies & guardrails
+      description: "Rules that must be enforced by instructions and agent behavior."
+      placeholder: |
+        - Atomic scope rules: …
+        - Dependency policy: …
+        - Security policy (no secrets/PII): …
+        - Naming conventions (if any): …
+        - Error handling/logging rules (if any): …
+    validations:
+      required: true
+
+  - type: textarea
+    id: directory_conventions
+    attributes:
+      label: Directory conventions
+      description: "Recommended layout and what to avoid."
+      placeholder: |
+        - Defaults: src/, test(s)/, docs/, .github/
+        - Monorepo: apps/<app>/, packages/<pkg>/
+        - Generated/vendor paths to avoid: generated/**, dist/**, vendor/**
+    validations:
+      required: true
+
+  - type: textarea
+    id: copilot_instructions_spec
+    attributes:
+      label: Spec for .github/copilot-instructions.md (write N/A if out of scope)
+      description: "List required sections, required wording, and what must not be included."
+      placeholder: |
+        Required sections:
+        - Purpose
+        - Non-negotiables
+        - Project snapshot (TBD policy)
+        - Standard commands (TBD policy)
+        - Directory conventions
+        - Dependencies policy
+        - Security policy
+        - PR expectations (Summary / How to test / Assumptions)
+
+        Must avoid:
+        - silently choosing stack
+        - conflicting rules vs AGENTS.md
+    validations:
+      required: true
+
+  - type: textarea
+    id: agents_md_spec
+    attributes:
+      label: Spec for AGENTS.md (write N/A if out of scope)
+      description: "Operational guidance for agents: behavior, boundaries, PR template."
+      placeholder: |
+        Required sections:
+        - How to work on an issue (step-by-step)
+        - Boundaries: Never / Ask first / Always
+        - If stack not specified: do not pick silently; propose options and stop
+        - PR description template
+
+        Repo-specific boundaries:
+        - …
+    validations:
+      required: true
+
+  - type: textarea
+    id: setup_steps_spec
+    attributes:
+      label: Spec for copilot-setup-steps.yml (write N/A if out of scope)
+      description: "Define what to set up, detection approach, and safety constraints."
+      placeholder: |
+        - File path: .github/workflows/copilot-setup-steps.yml
+        - Single job name: copilot-setup-steps (and no other jobs)
+        - Runner: ubuntu-latest
+        - Permissions: contents: read (least privilege)
+        - Behavior:
+          - no manifests -> succeed (no-op) with clear log message
+          - ambiguous/monorepo -> skip unsafe restores
+        - Supported stack setup: (list per stack)
+        - Private deps/auth: no secrets here; follow-up issue for env secrets
+        - timeout-minutes: …
+    validations:
+      required: true
+
+  - type: textarea
+    id: non_goals
+    attributes:
+      label: Non-goals / out of scope
+      description: "What this R task must NOT do."
+      placeholder: |
+        - Do NOT add application code
+        - Do NOT add dependencies/manifests/lockfiles
+        - Do NOT add normal CI pipelines (build/test/lint) unless explicitly requested
+        - Do NOT edit repo settings/rulesets
+    validations:
+      required: true
+
+  - type: textarea
+    id: change_surface
+    attributes:
+      label: Change surface (what to touch / what to avoid)
+      description: "Be strict to avoid scope creep and diff noise."
+      placeholder: |
+        **Must/likely touch**
+        - `.github/copilot-instructions.md`
+        - `AGENTS.md`
+        - `.github/workflows/copilot-setup-steps.yml`
+
+        **Must avoid / do not edit**
+        - `.github/ISSUE_TEMPLATE/**`
+        - `README.md`, `LICENSE`
+        - application code (`src/**`, `app/**`, `packages/**`)
+        - dependency manifests/lockfiles unless explicitly in scope
+        - other workflows in `.github/workflows/**`
+
+        **Symbols / search terms**
+        - `copilot-setup-steps`
+        - `.github/workflows/copilot-setup-steps.yml`
+        - `TBD`
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance criteria (verifiable)
+      description: "Concrete checkboxes to decide done/not-done quickly."
+      placeholder: |
+        - [ ] Scope matches artifact selection (no extra file changes)
+        - [ ] Instructions are stack-agnostic unless the Issue specifies otherwise
+        - [ ] TBD policy is explicit (what is TBD and who/when updates it)
+        - [ ] No secrets/PII are included
+        - [ ] If setup-steps is in scope:
+              - [ ] correct path
+              - [ ] single job named `copilot-setup-steps`
+              - [ ] least permissions
+              - [ ] succeeds for empty repo (no-op)
+    validations:
+      required: true
+
+  - type: textarea
+    id: test_plan
+    attributes:
+      label: Test plan (commands + steps)
+      description: "Even for docs/workflows, specify how you validated it."
+      placeholder: |
+        **Diff check**
+        - Confirm only intended files changed in PR "Files changed"
+
+        **GitHub Actions**
+        1. Open Actions tab
+        2. Run workflow "Copilot Setup Steps" via workflow_dispatch (if applicable)
+        3. Confirm it succeeds and logs what it detected/executed/skipped
+    validations:
+      required: true
+
+  - type: textarea
+    id: edge_cases
+    attributes:
+      label: Edge cases / failure modes to handle
+      description: "Common R-task pitfalls: drift, conflicts, overreach, brittle setup."
+      placeholder: |
+        - Instructions drift from repo reality (commands/paths mismatch)
+        - Conflicts between instruction layers (copilot-instructions vs AGENTS)
+        - setup-steps fails on empty repo (must no-op succeed)
+        - Multiple stacks detected (skip unsafe restores)
+        - Private registry required (no secrets in this PR; follow-up issue)
+        - Diff noise / out-of-scope file changes
+    validations:
+      required: true
+
+  - type: textarea
+    id: followups
+    attributes:
+      label: Follow-ups (atomic next issues)
+      description: "List improvements to defer, to keep this PR atomic."
+      placeholder: |
+        - Add normal CI workflows (build/test/lint)
+        - Add path-specific instructions (.github/instructions/**/*.instructions.md)
+        - Add copilot environment secrets/vars for private deps
+        - Add stack-decision doc
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: r_readiness
+    attributes:
+      label: R readiness checklist
+      description: "These checks help ensure Copilot can complete this in one PR."
+      options:
+        - label: "Scope is R-only (no app code, no deps, no extra CI) unless explicitly requested."
+        - label: "Change surface explicitly lists what to touch and what to avoid."
+        - label: "Stack uncertainty is handled with an explicit TBD policy (no silent decisions)."
+        - label: "If setup-steps is in scope, the job name/path/single-job constraints are stated."
+        - label: "No secrets/credentials/PII appear in the issue."
+

@@ -1,0 +1,213 @@
+name: "WRAP R: Copilot Instructions"
+description: "R-only: Create/update .github/copilot-instructions.md (repo-wide Copilot guidance)."
+title: "[r/instructions] <verb>: <outcome>"
+labels: ["wrap-r", "wrap-r-instructions", "copilot-task", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## How to use this template
+
+        Use this form when the PR should change **only** Copilot repo instructions:
+        - `.github/copilot-instructions.md`
+
+        Keep it atomic:
+        - No app code changes
+        - No dependency changes
+        - No other workflows
+
+        Finalize the issue body before assigning to Copilot.
+        Requirement changes after assignment should go into the PR discussion.
+
+  - type: dropdown
+    id: scope_size
+    attributes:
+      label: Expected scope (rough)
+      options:
+        - XS (typo / small clarification)
+        - S (small section addition)
+        - M (rewrite/structure improvement)
+        - L (borderline; likely split)
+        - XL (do not assign; needs design)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0 (blocks agent work)
+        - P1 (high)
+        - P2 (normal)
+        - P3 (low)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: instruction_language
+    attributes:
+      label: Instruction language
+      options:
+        - English
+        - Japanese
+        - Bilingual (English + Japanese)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: repo_stage
+    attributes:
+      label: Repository stage
+      options:
+        - Empty/near-empty
+        - Minimal skeleton exists
+        - Established repo
+        - Monorepo
+    validations:
+      required: true
+
+  - type: dropdown
+    id: stack_certainty
+    attributes:
+      label: Tech stack certainty
+      options:
+        - Unknown (TBD-heavy)
+        - Partially known
+        - Mostly known
+    validations:
+      required: true
+
+  - type: textarea
+    id: exec_brief
+    attributes:
+      label: Executive brief (read first)
+      placeholder: |
+        - Goal: …
+        - Why now: …
+        - What sections must exist after the change: …
+        - What should remain TBD: …
+        - Definition of done: …
+    validations:
+      required: true
+
+  - type: textarea
+    id: current_state
+    attributes:
+      label: Current state / problem
+      placeholder: |
+        - What is missing/unclear today: …
+        - Where Copilot/newcomers get confused: …
+        - Drift examples: …
+    validations:
+      required: true
+
+  - type: textarea
+    id: required_sections
+    attributes:
+      label: Required sections to include
+      description: "List the exact sections/headings you want (or confirm the standard baseline)."
+      placeholder: |
+        Must include:
+        - Purpose
+        - Non-negotiables
+        - Project snapshot (with explicit TBD policy)
+        - Standard commands (with explicit TBD policy)
+        - Directory conventions
+        - Dependencies policy
+        - Security policy
+        - PR expectations (Summary / How to test / Assumptions)
+    validations:
+      required: true
+
+  - type: textarea
+    id: standard_commands
+    attributes:
+      label: Standard commands (final or TBD)
+      placeholder: |
+        - Setup/install: TBD
+        - Build: TBD
+        - Test: TBD
+        - Lint: TBD
+        - Format: TBD
+        - Run locally: TBD
+        - CI (combined): TBD
+    validations:
+      required: true
+
+  - type: textarea
+    id: policies
+    attributes:
+      label: Policies & guardrails to codify
+      placeholder: |
+        - Atomic PRs; minimize diff noise
+        - Dependencies: minimal; justify additions
+        - Security: no secrets/PII; .env.example pattern
+        - Naming conventions (if any): …
+        - Error handling/logging expectations (if any): …
+    validations:
+      required: true
+
+  - type: textarea
+    id: non_goals
+    attributes:
+      label: Non-goals / out of scope
+      placeholder: |
+        - Do NOT add app code
+        - Do NOT add dependencies/manifests
+        - Do NOT add/modify workflows
+        - Do NOT change AGENTS.md (separate issue)
+    validations:
+      required: true
+
+  - type: textarea
+    id: change_surface
+    attributes:
+      label: Change surface (what to touch / what to avoid)
+      placeholder: |
+        **Must/likely touch**
+        - `.github/copilot-instructions.md`
+
+        **Must avoid / do not edit**
+        - `AGENTS.md`
+        - `.github/workflows/**`
+        - `.github/ISSUE_TEMPLATE/**`
+        - `README.md`, `LICENSE`
+        - application code + dependencies
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance criteria (verifiable)
+      placeholder: |
+        - [ ] Only `.github/copilot-instructions.md` changed
+        - [ ] Required sections exist
+        - [ ] TBD policy is explicit and non-ambiguous
+        - [ ] No secrets/PII included
+        - [ ] No conflicting guidance vs existing repo policies (if present)
+    validations:
+      required: true
+
+  - type: textarea
+    id: test_plan
+    attributes:
+      label: Test plan (steps)
+      placeholder: |
+        - Verify PR touches only `.github/copilot-instructions.md`
+        - Spot-check: headings and policies are present and readable
+    validations:
+      required: true
+
+  - type: textarea
+    id: edge_cases
+    attributes:
+      label: Edge cases / failure modes to handle
+      placeholder: |
+        - Instructions drift from actual commands/paths (use TBD or reference README/Makefile)
+        - Conflicts with AGENTS.md (avoid contradictory rules)
+        - Overly prescriptive stack choice when stack is unknown
+    validations:
+      required: true
+
