@@ -1,4 +1,4 @@
-# wrap-framwork-sample
+# WRAP Framework Template
 
 This repository is a **workshop template** for practicing **WRAP (W/R/A/P)** with **GitHub Copilot coding agent**.
 

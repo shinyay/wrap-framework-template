@@ -1,4 +1,4 @@
-# wrap-framwork-sample
+# WRAP Framework Templare
 
 このリポジトリは、**GitHub Copilot coding agent** を使って **WRAP（W/R/A/P）** を実践するための **ワークショップ用テンプレート**です。  
 ゴールは「空に近いリポジトリ」から、Issue を起点に **Copilot に PR を作らせ、レビューし、マージする**という反復で、プロジェクトを段階的に育てることです。
